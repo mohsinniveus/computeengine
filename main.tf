@@ -21,7 +21,8 @@ resource "google_compute_instance" "default" {
 
   boot_disk {
     initialize_params {
-      image = "ubuntu-2204-lts"
+      //image = "ubuntu-2204-lts"
+      image = google_compute_image.jenkineimage.self_link
     }
   }
 
@@ -38,8 +39,17 @@ resource "google_compute_instance" "default" {
  metadata_startup_script = "sudo apt-get update && sudo apt-get install apache2 -y && echo '<!doctype html><html><body><h1>Niveus Solutions Pvt Ltd</h1></body></html>' | sudo tee /var/www/html/index.html"
 
  // Apply the firewall rule to allow external IPs to access this instance
-  tags = ["test-fw-allow-http","test-fw-allow-https"]
+  tags = ["test-fw-allow-http","test-fw-allow-https","test-fw-allow-http-8080"]
 
+}
+
+
+resource "google_compute_image" "jenkineimage" {
+  name = "jenkine-image"
+
+  raw_disk {
+    source = "https://storage.cloud.google.com/tech-vm-machine-images/machine-img/jenkins-image.tar.gz"
+  }
 }
 
  # Enable port 90 to allow http traffic
@@ -64,4 +74,16 @@ resource "google_compute_firewall" "allow-https" {
   }
   source_ranges = ["0.0.0.0/0"]
   target_tags = ["https"]
+}
+
+
+resource "google_compute_firewall" "allow-http-8080" {
+  name = "test-fw-allow-http-8080"
+  network = "default"
+  allow {
+    protocol = "tcp"
+    ports    = ["8080"]
+  }
+  source_ranges = ["0.0.0.0/0"]
+  target_tags = ["http"]
 }
